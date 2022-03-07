@@ -16,7 +16,7 @@ from wordcloud import STOPWORDS, WordCloud
 sid = SentimentIntensityAnalyzer()
 
 
-key = 'AIzaSyD7RosKVsNzRrt9G23_8twf_xiWNngd5DE' #replace with your youtube data api key
+key = '' #replace with your youtube data api key
 # videoId = 'kHOVWiZKpHM'
 
 def get_yt_video_id(url):
