@@ -1,0 +1,6 @@
+streamlit==1.7.0
+nltk==3.6.2
+pandas==1.2.4
+wordcloud==1.8.1
+matplotlib==3.4.2
+google_api_python_client==2.39.0
