@@ -1,8 +1,6 @@
 import json
-from csv import writer
 from googleapiclient.discovery import build
 import pandas as pd
-import pickle
 import urllib.request
 import urllib
 from urllib.parse import urlparse, parse_qs
@@ -14,11 +12,10 @@ from wordcloud import STOPWORDS, WordCloud
 from config import api_key
 
 
+## Vader Sentiment Analysis Polarity
 sid = SentimentIntensityAnalyzer()
 
-
 key = api_key #replace with your youtube data api key
-# videoId = 'kHOVWiZKpHM'
 
 def get_yt_video_id(url):
     """Returns Video_ID extracting from the given url of Youtube
@@ -58,6 +55,7 @@ def build_service():
                  developerKey=key)
 
 def clean_text(comment):
+    '''Returens Clean text after removing special characters'''
     clean_text = ''
     #Step 1
     for i in comment:
@@ -66,26 +64,18 @@ def clean_text(comment):
         #check if its an ascii characters
         if ord(i) < 128 and ord(i) > 31:
             clean_text += i
-        #also process umlauts because they are important for our text 
-        elif ord(i) in [ord('ö'), ord('Ö'), ord('ü'), ord('Ü'), 
-                       ord('ä'), ord('Ä'), ord('é'), ord('ß')]:
-            clean_text += i
-        #else, we remove the character
         else:
             continue
-    if 'href' in clean_text:
-        clean_text = clean_text.replace("href", "")
-    if 't.co' in clean_text:
-        clean_text = clean_text.replace("t.co", "")
-    if 'target_' in clean_text:
-        clean_text = clean_text.replace("target_", "")
     #Step 2       
     clean_text1 = re.sub(' +', ' ', clean_text)
     return clean_text1
 
 
 def get_sentiment(comment):
-
+    '''
+    Uses Vader nltk lib to get the sentiment.
+    Returns the sentiment value and type. positive, negative or neutral
+    '''
     clean_comment = clean_text(comment)
     clean_comment = comment
     results= sid.polarity_scores(clean_comment)
@@ -101,11 +91,10 @@ def get_sentiment(comment):
 
 
 #2 configure function parameters for required variables to pass to service
-def get_comments(videoId,part='snippet', 
-                 maxResults=50, 
+def get_comments_sentiment(videoId,part='snippet', 
+                 maxResults=100, 
                  textFormat='plainText',
-                 order='time',
-                 csv_filename="tinas_comments"
+                 order='time'
                  ):
 
     #3 create empty lists to store desired information
@@ -140,8 +129,6 @@ def get_comments(videoId,part='snippet',
             totalReplyCount = item['snippet']['totalReplyCount']
             vidTitle = get_vid_title(vidId)
             sentiment_value,sentiment_type = get_sentiment(comment)
-            
-            print(sentiment_value)
             #6 append to lists
             comments.append(comment)
             commentsId.append(comment_id)
@@ -192,7 +179,6 @@ def get_comments(videoId,part='snippet',
 
 # vidid to table name
 def get_vid_title(vidid):
-    # VideoID = "LAUa5RDUvO4"
     params = {"format": "json", "url": "https://www.youtube.com/watch?v=%s" % vidid}
     url = "https://www.youtube.com/oembed"
     query_string = urllib.parse.urlencode(params)
@@ -204,27 +190,30 @@ def get_vid_title(vidid):
         # print(data['title'])
         return data['title']
 
+## Streamlite formating
 
 st.set_option('deprecation.showPyplotGlobalUse', False)
+
 st.title('No Dislikes? No Problem')
 st.header('Enter the youtube url to analyse it')
 url = st.text_input('')
+
 if len(url) !=0:
     st.video(url)
     videoID = get_yt_video_id(url)
-    tinas_comments = get_comments(videoID)
-    df = pd.DataFrame(tinas_comments)
+    video_comments_sentiment = get_comments_sentiment(videoID)
+    df = pd.DataFrame(video_comments_sentiment)
+
     if len(df) == 0:
         st.header('Sorry,No comments to Analyse :(')
     else:
-        print(df.shape)
-        print(df.head())
         df['date'] = pd.to_datetime(df['date'], errors='coerce')
         df['just_date'] = df['date']
 
+        cloud,pie = st.columns([1.5,2.5])
+        
 
-        col1,col2 = st.columns([1.5,2.5])
-
+        ## Word Cloud
         word_cloud = ' '
         for i in range(len(df)):
             word_cloud = word_cloud + df['comment'][i]
@@ -236,14 +225,13 @@ if len(url) !=0:
         plt.imshow(wcloud, interpolation='bilinear')
         plt.axis("off")
         plt.show()
-        with col1:
+        with cloud:
             st.pyplot()
 
 
         ## Pie Chart
 
         df_sentiment = df['sentiment_type'].value_counts()
-
         label = df_sentiment.index.tolist()
         count = []
         colours_list = ['#43A640','#FFEE73','#F03333']
@@ -261,11 +249,11 @@ if len(url) !=0:
         fig1, ax1 = plt.subplots()
         ax1.pie(count, labels=label,colors=colours,autopct=lambda p: '{:.0f}'.format(p * total / 100),startangle=90)
         ax1.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
-        with col2:
+        with pie:
             st.pyplot(fig1)
 
-        
 
+        ##TOP POSITIVE
 
         top_positive = df.sort_values(by=['sentiment'],ascending=False).reset_index()
         top_positive = top_positive.drop(top_positive[top_positive.sentiment <= 0.1].index)
@@ -275,13 +263,13 @@ if len(url) !=0:
         else:
             top_positive = top_positive[['author_name','comment']]
             top_positive = top_positive.head(1)
-
             st.header('TOP POSITIVE COMMENT')
             st.subheader('User')
             st.write(top_positive['author_name'][0])
             st.subheader('Comment')
             st.write(top_positive['comment'][0])
 
+         ##TOP NEGATIVE
 
         top_negative = df.sort_values(by=['sentiment']).reset_index()
         top_negative = top_negative.drop(top_negative[top_negative.sentiment >= 0].index)
@@ -291,13 +279,13 @@ if len(url) !=0:
         else:
             top_negative = top_negative[['author_name','comment']]
             top_negative = top_negative.head(1)
-            
             st.header('TOP NEGATIVE COMMENT')
             st.subheader('User')
             st.write(top_negative['author_name'][0])
             st.subheader('Comment')
             st.write(top_negative['comment'][0])
 
+        ##LINE CHART
         df_sentiment_line = df[['sentiment']]
         st.header('Incomming Comments vs Sentiment')
         st.line_chart(df_sentiment_line)
