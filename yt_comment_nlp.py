@@ -11,13 +11,13 @@ from nltk.sentiment.vader import SentimentIntensityAnalyzer
 import re
 import matplotlib.pyplot as plt
 from wordcloud import STOPWORDS, WordCloud
-
+from config import api_key
 
 
 sid = SentimentIntensityAnalyzer()
 
 
-key = 'AIzaSyAf2HnF9R_Uma7IHg0ODdq7fs5-Z6ESQH0' #replace with your youtube data api key
+key = api_key #replace with your youtube data api key
 # videoId = 'kHOVWiZKpHM'
 
 def get_yt_video_id(url):
