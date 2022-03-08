@@ -16,7 +16,7 @@ from wordcloud import STOPWORDS, WordCloud
 sid = SentimentIntensityAnalyzer()
 
 
-key = '' #replace with your youtube data api key
+key = 'AIzaSyAf2HnF9R_Uma7IHg0ODdq7fs5-Z6ESQH0' #replace with your youtube data api key
 # videoId = 'kHOVWiZKpHM'
 
 def get_yt_video_id(url):
@@ -203,75 +203,95 @@ def get_vid_title(vidid):
         # print(data['title'])
         return data['title']
 
+
 st.set_option('deprecation.showPyplotGlobalUse', False)
 st.title('No Dislikes? No Problem')
-url = st.text_input('Enter the youtube url to analyse it')
-st.video(url)
-videoID = get_yt_video_id(url)
-tinas_comments = get_comments(videoID)
-df = pd.DataFrame(tinas_comments)
-print(df.shape)
-print(df.head())
-df['date'] = pd.to_datetime(df['date'], errors='coerce')
-df['just_date'] = df['date']
+st.header('Enter the youtube url to analyse it')
+url = st.text_input('')
+if len(url) !=0:
+    st.video(url)
+    videoID = get_yt_video_id(url)
+    tinas_comments = get_comments(videoID)
+    df = pd.DataFrame(tinas_comments)
+    if len(df) == 0:
+        st.header('Sorry,No comments to Analyse :(')
+    else:
+        print(df.shape)
+        print(df.head())
+        df['date'] = pd.to_datetime(df['date'], errors='coerce')
+        df['just_date'] = df['date']
 
 
-col1,col2 = st.columns([1,3])
+        col1,col2 = st.columns([1.5,2.5])
 
-word_cloud = ' '
-for i in range(len(df)):
-    word_cloud = word_cloud + df['comment'][i]
+        word_cloud = ' '
+        for i in range(len(df)):
+            word_cloud = word_cloud + df['comment'][i]
 
-stopwords = STOPWORDS
-wc = WordCloud(background_color="white", stopwords=stopwords, height=900, width=300)
-wcloud=  wc.generate(word_cloud) 
+        stopwords = STOPWORDS
+        wc = WordCloud(background_color="white", stopwords=stopwords, height=500, width=300)
+        wcloud=  wc.generate(word_cloud) 
 
-plt.imshow(wcloud, interpolation='bilinear')
-plt.axis("off")
-plt.show()
-with col1:
-    st.pyplot()
-
-
-## Pie Chart
-
-df_sentiment = df['sentiment_type'].value_counts()
-
-label = df_sentiment.index.tolist()
-count = []
-colours = ['#43A640','#FFEE73','#F03333']
-for i in df_sentiment:
-    count.append(i)
-total = sum(count)
-fig1, ax1 = plt.subplots()
-ax1.pie(count, labels=label,colors=colours,autopct=lambda p: '{:.0f}'.format(p * total / 100),startangle=90)
-ax1.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
-with col2:
-    st.pyplot(fig1)
-
-col3,col4 = st.columns(2)
+        plt.imshow(wcloud, interpolation='bilinear')
+        plt.axis("off")
+        plt.show()
+        with col1:
+            st.pyplot()
 
 
-top_positive = df.sort_values(by=['sentiment'],ascending=False)
-top_positive = top_positive.drop(top_positive[top_positive.sentiment <= 0].index)
-top_positive = top_positive[['author_name','comment']]
+        ## Pie Chart
+
+        df_sentiment = df['sentiment_type'].value_counts()
+
+        label = df_sentiment.index.tolist()
+        count = []
+        colours = ['#43A640','#FFEE73','#F03333']
+        for i in df_sentiment:
+            count.append(i)
+        total = sum(count)
+        fig1, ax1 = plt.subplots()
+        ax1.pie(count, labels=label,colors=colours,autopct=lambda p: '{:.0f}'.format(p * total / 100),startangle=90)
+        ax1.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
+        with col2:
+            st.pyplot(fig1)
+
+        
 
 
-top_negative = df.sort_values(by=['sentiment'])
-top_negative = top_negative.drop(top_negative[top_negative.sentiment >= 0].index)
-top_negative =  top_negative[['author_name','comment']]
+        top_positive = df.sort_values(by=['sentiment'],ascending=False).reset_index()
+        top_positive = top_positive.drop(top_positive[top_positive.sentiment <= 0].index)
+        if len(top_positive) == 0:
+            st.header('TOP POSITIVE COMMENT')
+            st.subheader('Nothing positive here')
+        else:
+            top_positive = top_positive[['author_name','comment']]
+            top_positive = top_positive.head(1)
+
+            st.header('TOP POSITIVE COMMENT')
+            st.subheader('User')
+            st.write(top_positive['author_name'][0])
+            st.subheader('Comment')
+            st.write(top_positive['comment'][0])
 
 
-with col3:
-    st.write('TOP POSITIVE COMMENT')
-    st.table(top_positive.head(3))
-with col4:    
-    st.write('TOP NEGATIVE COMMENTS')
-    st.table(top_negative.head(3))
+        top_negative = df.sort_values(by=['sentiment']).reset_index()
+        top_negative = top_negative.drop(top_negative[top_negative.sentiment >= 0].index)
+        if len(top_negative) == 0:
+            st.header('TOP NEGATIVE COMMENT')
+            st.subheader('Nothing negative here')
+        else:
+            top_negative = top_negative[['author_name','comment']]
+            top_negative = top_negative.head(1)
+            
+            st.header('TOP NEGATIVE COMMENT')
+            st.subheader('User')
+            st.write(top_negative['author_name'][0])
+            st.subheader('Comment')
+            st.write(top_negative['comment'][0])
 
-df_sentiment_line = df[['sentiment']]
+        df_sentiment_line = df[['sentiment']]
 
-st.line_chart(df_sentiment_line)
+        st.line_chart(df_sentiment_line)
 
 
 
