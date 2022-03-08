@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 from wordcloud import STOPWORDS, WordCloud
 
 
+
 sid = SentimentIntensityAnalyzer()
 
 
@@ -88,15 +89,12 @@ def get_sentiment(comment):
     clean_comment = clean_text(comment)
     clean_comment = comment
     results= sid.polarity_scores(clean_comment)
-    neutral = results['neu']
-    positive = results['pos']
-    negative = results['neg']
     result = results['compound']
-    if result > 0:
+    if result >= 0.1:
         sentiment_type = 'POSITIVE'
     if result < 0:
         sentiment_type = 'NEGATIVE'
-    if result == 0:
+    if result >= 0 and result < 0.1:
         sentiment_type = 'NEUTRAL'
     return result,sentiment_type
 
@@ -126,7 +124,7 @@ def get_comments(videoId,part='snippet',
         #allThreadsRelatedToChannelId=channelId
     ).execute()
     c = st.empty()
-    a = 1
+    a = 0
     while response: # this loop will continue to run until you max out your quota
         
         for item in response['items']:
@@ -248,7 +246,15 @@ if len(url) !=0:
 
         label = df_sentiment.index.tolist()
         count = []
-        colours = ['#43A640','#FFEE73','#F03333']
+        colours_list = ['#43A640','#FFEE73','#F03333']
+        colours = []
+        for i in label:
+            if i == 'POSITIVE':
+                colours.append(colours_list[0])
+            if i == 'NEUTRAL':
+                colours.append(colours_list[1])
+            if i == 'NEGATIVE':
+                colours.append(colours_list[2])
         for i in df_sentiment:
             count.append(i)
         total = sum(count)
@@ -262,7 +268,7 @@ if len(url) !=0:
 
 
         top_positive = df.sort_values(by=['sentiment'],ascending=False).reset_index()
-        top_positive = top_positive.drop(top_positive[top_positive.sentiment <= 0].index)
+        top_positive = top_positive.drop(top_positive[top_positive.sentiment <= 0.1].index)
         if len(top_positive) == 0:
             st.header('TOP POSITIVE COMMENT')
             st.subheader('Nothing positive here')
@@ -293,7 +299,7 @@ if len(url) !=0:
             st.write(top_negative['comment'][0])
 
         df_sentiment_line = df[['sentiment']]
-
+        st.header('Incomming Comments vs Sentiment')
         st.line_chart(df_sentiment_line)
 
 
