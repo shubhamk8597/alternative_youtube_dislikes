@@ -16,7 +16,10 @@ nltk.download('vader_lexicon')
 ## Vader Sentiment Analysis Polarity
 sid = SentimentIntensityAnalyzer()
 
-key = api_key #replace with your youtube data api key
+try:
+    key = st.secrets['api_key'] 
+except:
+    key = api_key #replace with your youtube data api keys
 
 def get_yt_video_id(url):
     """Returns Video_ID extracting from the given url of Youtube
