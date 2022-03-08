@@ -10,7 +10,8 @@ import re
 import matplotlib.pyplot as plt
 from wordcloud import STOPWORDS, WordCloud
 from config import api_key
-
+import nltk
+nltk.download('vader_lexicon')
 
 ## Vader Sentiment Analysis Polarity
 sid = SentimentIntensityAnalyzer()
