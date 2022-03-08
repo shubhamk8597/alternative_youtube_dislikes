@@ -125,9 +125,10 @@ def get_comments(videoId,part='snippet',
         videoId=videoId
         #allThreadsRelatedToChannelId=channelId
     ).execute()
-
+    c = st.empty()
+    a = 1
     while response: # this loop will continue to run until you max out your quota
-
+        
         for item in response['items']:
             #5 index item for desired data features
             comment = item['snippet']['topLevelComment']['snippet']['textDisplay']
@@ -156,7 +157,9 @@ def get_comments(videoId,part='snippet',
             vidTitles.append(vidTitle)
             sentiment.append(sentiment_value)
             sentiment_types.append(sentiment_type)
-
+            a = a +1
+            c.subheader('Number of Comments analysed ' + str(a))
+        
         try:
             if 'nextPageToken' in response:
                 response = service.commentThreads().list(
@@ -171,7 +174,7 @@ def get_comments(videoId,part='snippet',
             else:
                 break
         except: break
-
+    
     #9 return our data of interest
     return {
         'comment': comments,
