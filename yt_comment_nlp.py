@@ -198,8 +198,9 @@ def get_vid_title(vidid):
 
 st.set_option('deprecation.showPyplotGlobalUse', False)
 
-st.title('No Dislikes? No Problem')
-st.header('Enter the youtube url to analyse it')
+st.title("No Dislikes? No Problem.Comments Don't Lie")
+st.header('Enter the YouTube URL Link to get Insights')
+st.write('Note- \n\n 1)Currently Supports only English Language Videos. \n\n 2)High number of comments will take more time. So sit back and relax')
 url = st.text_input('')
 
 if len(url) !=0:
